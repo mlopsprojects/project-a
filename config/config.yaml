@@ -1,0 +1,14 @@
+target: quality
+test_size: 0.3
+rf_hp:
+  n_estimators: [5, 10, 15, 20]
+  max_depth: [1, 5, 10, 25]
+  max_features: [NULL]
+lgbm_hp:
+  max_depth: [-1, 2, 4, 6]
+  n_estimators: [5, 10, 15, 20]
+  learning_rate: [ 0.01, 0.02, 0.03]
+data:
+  data_dir: data
+  test_size: 0.3
+  random_state: 42
