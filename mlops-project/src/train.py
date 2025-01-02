@@ -14,6 +14,7 @@ from loguru import logger
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV
+import mlflow
 
 # Load configuration
 with Path("config/config.yaml").open() as file:
@@ -71,6 +72,11 @@ def train_model() -> None:
 
         logger.info("{} best MSE: {}", name, grid_search.best_score_)
         logger.info("{} best parameters: {}", name, grid_search.best_params_)
+        # Log best score and parameters to MLflow
+        mlflow.log_metric(f"{name}_best_mse", -grid_search.best_score_)
+        mlflow.log_params(
+            {f"{name}_{key}": value for key, value in grid_search.best_params_.items()}
+        )
 
     # Select the best model
     best_model_name = min(results.items(), key=lambda x: x[1]["best_score"])[0]
@@ -85,11 +91,20 @@ def train_model() -> None:
     logger.info("Best Model: {}", best_model_name)
     logger.info("Test MSE: {}", test_mse)
     logger.info("Test R2: {}", test_r2)
+    # Log test metrics to MLflow
+    mlflow.log_metric("test_mse", test_mse)
+    mlflow.log_metric("test_r2", test_r2)
 
     # Save the best model
     joblib.dump(best_model, "models/best_model.joblib")
     logger.info("\nBest model saved as 'models/best_model.joblib'")
+    # Log the best model as an MLflow artifact
+    mlflow.sklearn.log_model(best_model, "best_model")
+    logger.info("Best model logged as an MLflow artifact")
 
 
 if __name__ == "__main__":
-    train_model()
+    mlflow.set_experiment("wine-quality")
+
+    with mlflow.start_run():
+        train_model()
